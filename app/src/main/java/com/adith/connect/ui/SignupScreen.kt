@@ -13,17 +13,17 @@ import com.adith.connect.viewmodel.AuthViewModel
 import com.adith.connect.viewmodel.AuthState
 
 @Composable
-fun LoginScreen(
+fun SignupScreen(
     viewModel: AuthViewModel = viewModel(),
-    onLoginSuccess: () -> Unit,
-    onSignupClick: () -> Unit
+    onSignupSuccess: () -> Unit,
+    onLoginClick: () -> Unit
 ) {
     val authState by viewModel.authState.collectAsState()
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // 🌟 Friendly Error Message (Top Center)
+        // 🌟 Friendly Message Display at the Top
         if (authState is AuthState.Error) {
             Box(
                 modifier = Modifier
@@ -42,7 +42,7 @@ fun LoginScreen(
             }
         }
 
-        // 🧱 Main Form (Centered)
+        // 🧱 Main Form Centered
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -50,7 +50,7 @@ fun LoginScreen(
                 .align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Log In", style = MaterialTheme.typography.headlineMedium)
+            Text("Sign Up", style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.height(16.dp))
 
             OutlinedTextField(
@@ -77,19 +77,19 @@ fun LoginScreen(
             Spacer(Modifier.height(16.dp))
 
             Button(
-                onClick = { viewModel.login(email, password) },
+                onClick = { viewModel.signUp(email, password) },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Log In")
+                Text("Create Account")
             }
 
             Spacer(Modifier.height(8.dp))
 
             TextButton(
-                onClick = onSignupClick,
+                onClick = onLoginClick,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
-                Text("Don't have an account? Sign up")
+                Text("Already have an account? Log in")
             }
 
             if (authState is AuthState.Loading) {
@@ -98,8 +98,18 @@ fun LoginScreen(
             }
 
             if (authState is AuthState.Success) {
-                LaunchedEffect(Unit) { onLoginSuccess() }
+                LaunchedEffect(Unit) { onSignupSuccess() }
             }
         }
+    }
+}
+
+// ✅ Converts technical error to user-friendly message
+fun friendlyMessage(message: String): String {
+    return when {
+        "email address is badly" in message.lowercase() -> "Please enter a valid email address"
+        "password should be at least" in message.lowercase() -> "Password must be at least 6 characters"
+        "email address is already" in message.lowercase() -> "This email is already registered"
+        else -> message // fallback to raw if unknown
     }
 }
