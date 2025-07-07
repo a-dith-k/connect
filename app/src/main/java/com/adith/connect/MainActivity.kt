@@ -5,31 +5,28 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.*
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.adith.connect.ui.ChatScreen
-import com.adith.connect.ui.LoginScreen
-import com.adith.connect.ui.SignupScreen
+import com.adith.connect.ui.*
 import com.adith.connect.ui.theme.ConnectTheme
-import com.adith.connect.viewmodel.AuthViewModel
-import com.adith.connect.viewmodel.AuthState
-import com.adith.connect.viewmodel.ChatViewModel
+import com.adith.connect.viewmodel.*
 import com.google.firebase.FirebaseApp
+import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        FirebaseApp.initializeApp(this) // Ensure Firebase is initialized
+        FirebaseApp.initializeApp(this)
 
         setContent {
             ConnectTheme {
                 val authViewModel: AuthViewModel = viewModel()
                 val chatViewModel: ChatViewModel = viewModel()
+                val adminViewModel: AdminViewModel = viewModel()
 
                 val authState by authViewModel.authState.collectAsState()
                 val messages by chatViewModel.messages.collectAsState()
 
-                // Control screen toggling between Login and Signup
-                var showLoginScreen by remember { mutableStateOf(true) }
+                var showLogin by remember { mutableStateOf(true) }
 
                 when (authState) {
                     is AuthState.Success -> {
@@ -37,25 +34,27 @@ class MainActivity : ComponentActivity() {
                         ChatScreen(
                             messages = messages,
                             currentUser = currentUser,
-                            onSend = { messageText ->
-                                chatViewModel.sendMessage(
-                                    text = messageText,
-                                    sender = currentUser
-                                )
+                            onSend = { message ->
+                                chatViewModel.sendMessage(message, currentUser)
                             }
                         )
                     }
 
+                    is AuthState.AdminSuccess -> {
+                        AdminScreen(viewModel = adminViewModel)
+                    }
+
                     else -> {
-                        if (showLoginScreen) {
+                        if (showLogin) {
                             LoginScreen(
-                                onLoginSuccess = { /* AuthState.Success handles nav */ },
-                                onSignupClick = { showLoginScreen = false }
+                                onLoginSuccess = { /* handled by AuthState */ },
+                                onAdminLoginSuccess = { /* handled by AuthState */ },
+                                onSignupClick = { showLogin = false }
                             )
                         } else {
                             SignupScreen(
-                                onSignupSuccess = { /* AuthState.Success handles nav */ },
-                                onLoginClick = { showLoginScreen = true }
+                                onSignupSuccess = { showLogin = true },
+                                onLoginClick = { showLogin = true }
                             )
                         }
                     }

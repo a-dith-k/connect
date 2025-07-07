@@ -9,21 +9,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.adith.connect.viewmodel.AuthViewModel
 import com.adith.connect.viewmodel.AuthState
+import com.adith.connect.viewmodel.AuthViewModel
 
 @Composable
 fun LoginScreen(
     viewModel: AuthViewModel = viewModel(),
     onLoginSuccess: () -> Unit,
+    onAdminLoginSuccess: () -> Unit,
     onSignupClick: () -> Unit
 ) {
     val authState by viewModel.authState.collectAsState()
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var isAdmin by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // 🌟 Friendly Error Message (Top Center)
+
+        // 🛑 Top-aligned error banner
         if (authState is AuthState.Error) {
             Box(
                 modifier = Modifier
@@ -42,7 +45,7 @@ fun LoginScreen(
             }
         }
 
-        // 🧱 Main Form (Centered)
+        // 🎯 Login form
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -74,10 +77,22 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(8.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.align(Alignment.Start)
+            ) {
+                Checkbox(checked = isAdmin, onCheckedChange = { isAdmin = it })
+                Text("I am admin")
+            }
+
+            Spacer(Modifier.height(8.dp))
 
             Button(
-                onClick = { viewModel.login(email, password) },
+                onClick = {
+                    viewModel.login(email, password, isAdmin)
+                },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Log In")
@@ -97,9 +112,12 @@ fun LoginScreen(
                 CircularProgressIndicator()
             }
 
-            if (authState is AuthState.Success) {
-                LaunchedEffect(Unit) { onLoginSuccess() }
+            when (authState) {
+                is AuthState.Success -> LaunchedEffect(Unit) { onLoginSuccess() }
+                is AuthState.AdminSuccess -> LaunchedEffect(Unit) { onAdminLoginSuccess() }
+                else -> {}
             }
         }
     }
 }
+
